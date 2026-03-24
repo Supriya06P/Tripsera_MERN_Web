@@ -1,9 +1,10 @@
-require('dotenv').config(); // Loads environment variables immediately
+require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const app = express();
 
@@ -12,11 +13,25 @@ app.use(cors());
 app.use(express.json());
 
 // --- DATABASE CONNECTION ---
-const localDB = process.env.localDB;
+const dbURI = process.env.MONGODB_URI;
 
-mongoose.connect(localDB)
-  .then(() => console.log("✅ Local MongoDB Connected!"))
-  .catch(err => console.error("❌ Connection Error:", err.message));
+if (!dbURI) {
+  console.error("❌ Error: No MONGODB_URI found in environment variables.");
+}
+
+// Optimized connection for restricted networks (like college Wi-Fi) and Vercel
+const connectionOptions = {
+  serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of 30
+  socketTimeoutMS: 45000,         // Close sockets after 45 seconds of inactivity
+  family: 4                       // Force IPv4 to avoid DNS resolution issues
+};
+
+mongoose.connect(dbURI, connectionOptions)
+  .then(() => console.log("✅ MongoDB Connected Successfully!"))
+  .catch(err => {
+    console.error("❌ Connection Error:", err.message);
+    console.log("💡 Tip: Ensure IP 0.0.0.0/0 is whitelisted in Atlas Network Access.");
+  });
 
 // --- 1. SCHEMAS ---
 const userSchema = new mongoose.Schema({
@@ -76,10 +91,9 @@ app.post('/api/auth/signin', async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return res.status(401).json({ message: "Invalid credentials" });
 
-    // UPDATED: Now uses the secret from your .env file
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.ADMIN_SECRET_KEY,
+      process.env.JWT_SECRET || process.env.ADMIN_SECRET_KEY, 
       { expiresIn: '1d' }
     );
 
@@ -113,7 +127,7 @@ app.post('/api/save-flyer', async (req, res) => {
   try {
     const newFlyer = new Flyer(req.body);
     await newFlyer.save();
-    res.status(201).json({ message: "Saved to local database!" });
+    res.status(201).json({ message: "Saved successfully!" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -158,9 +172,8 @@ app.delete('/api/flyers/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-// Add this to your server.js or routes file
-const axios = require('axios');
 
+// --- 5. PROXY ROUTE ---
 app.get('/api/proxy', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).send("URL is required");
@@ -172,14 +185,20 @@ app.get('/api/proxy', async (req, res) => {
       responseType: 'stream',
     });
 
-    // Forward the content type (image/jpeg, image/png, etc.)
     res.set('Content-Type', response.headers['content-type']);
     response.data.pipe(res);
   } catch (error) {
-    console.error("Proxy error:", error.message);
     res.status(500).send("Error fetching image");
   }
 });
-// --- START SERVER ---
+
+// --- SERVER START / EXPORT ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Tripsera Backend running on port ${PORT}`));
+
+// Only start the listener if we're not on Vercel
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`🚀 Tripsera Backend running on port ${PORT}`));
+}
+
+// Export the app for Vercel serverless functions
+module.exports = app;
