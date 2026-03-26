@@ -35,13 +35,19 @@ const Index = () => {
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setUser(null);
-    toast.success("Logged out successfully");
-    navigate("/");
-  };
+const handleLogout = () => {
+  // 1. Clear the physical storage
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+
+  // 2. Update the React state (THIS TRIGGERS THE RE-RENDER)
+  setUser(null); 
+
+  // 3. Notify and redirect
+  toast.success("Logged out successfully");
+  navigate("/");
+};
+  
 
   const handleStartDesigning = () => {
     if (user) {
@@ -407,7 +413,7 @@ const Index = () => {
                 <h5 className="font-bold text-slate-900 mb-6">Contact Support</h5>
                 <ul className="space-y-4 text-sm text-slate-500 font-medium">
                   <li><Link to="/contact" className="hover:text-purple-600 transition-colors">Help Center</Link></li>
-                  <li className="text-slate-400">supriyapachore06@gmail.com.com</li>
+                  <li className="text-slate-400">supriyapachore06@gmail.com</li>
                   <li className="text-slate-400 text-xs">
                     Sinnar<br />
                     Nashik, Maharashtra, 422103
