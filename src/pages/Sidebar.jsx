@@ -14,6 +14,7 @@ import FontPanel from "./FontPanel";
 import TextEffectPanel from "./TextEffectPanel";
 import PositionPanel from "./PositionPanel";
 
+import ImageFilterPanel from "./ImageFilterPanel";
 const SidebarItem = ({ icon: Icon, label, isActive, onClick }) => (
   <button
     onClick={onClick}
@@ -48,80 +49,100 @@ const Sidebar = ({
   selectedId
 }) => {
 
-  const renderContent = () => {
-    // --- FIX: Guard Clause for Edit Panels ---
-    // If an edit panel is requested but no element is selected, 
-    // reset the panel or show a fallback to prevent the .id crash.
-    if (activePanel) {
-      if (!selectedId || !selectedElement) {
-        // Option 1: Silently reset the panel
-        // setActivePanel(null); 
-
-        // Option 2: Show a friendly message (Better for UX)
-        return (
-          <div className="flex flex-col items-center justify-center h-full p-8 text-center text-slate-400">
-            <div className="p-4 bg-slate-50 rounded-full mb-4">
-              <ChevronLeft className="w-6 h-6 opacity-20" />
-            </div>
-            <p className="text-sm font-medium">No element selected</p>
-            <p className="text-xs mt-1">Select an item on the canvas to edit its properties.</p>
-          </div>
-        );
-      }
-
+const renderContent = () => {
+  if (activePanel) {
+    // This check is good—it ensures an element is actually selected
+    if (!selectedId || !selectedElement) {
       return (
-        <div className="flex flex-col h-full animate-in slide-in-from-left-4 duration-300">
-          <div className="flex-1 overflow-y-auto">
-            {activePanel === "font" && (
-              <FontPanel
-                selectedText={selectedElement}
-                setTexts={setElements}
-                selectedTextId={selectedId}
-                onClose={() => setActivePanel(null)}
-              />
-            )}
-            {activePanel === "effects" && (
-              <TextEffectPanel
-                selectedText={selectedElement}
-                setTexts={setElements}
-                selectedTextId={selectedId}
-                updateText={(updates) => {
-                  setElements((prev) =>
-                    prev.map((el) =>
-                      el.id === selectedId ? { ...el, style: { ...el.style, ...updates }, ...updates } : el
-                    )
-                  );
-                }}
-                onClose={() => setActivePanel(null)}
-              />
-            )}
-            {activePanel === 'position' && (
-              <PositionPanel
-                selectedText={selectedElement}
-                setTexts={setElements}
-                selectedTextId={selectedId}
-                onClose={() => setActivePanel(null)}
-              />
-            )}
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center text-slate-400">
+          <div className="p-4 bg-slate-50 rounded-full mb-4">
+            <ChevronLeft className="w-6 h-6 opacity-20" />
           </div>
+          <p className="text-sm font-medium">No element selected</p>
+          <p className="text-xs mt-1">Select an item on the canvas to edit its properties.</p>
         </div>
       );
     }
 
-    // Standard Tab Navigation
     return (
-      <div className="h-full overflow-y-auto">
-        {activeTab === "templates" && <DesignPanel onSelectTemplate={onSelectTemplate} />}
-        {activeTab === "text" && <TextPanel onAddText={onAddText} />}
-        {activeTab === "images" && <ImagePanel onAddImage={onAddImage} />}
-        {activeTab === "elements" && <ElementsPanel onAddElement={onAddElement} />}
-        {activeTab === "uploads" && (
-          <UploadsPanel onAddImage={onAddImage} onAddElement={onAddElement} onAddText={onAddText} />
-        )}
-        {activeTab === "videos" && <VideoPanel onAddVideo={onAddVideo} />}
+      <div className="flex flex-col h-full animate-in slide-in-from-left-4 duration-300">
+        <div className="flex-1 overflow-y-auto">
+          {/* --- ADD THIS BLOCK HERE --- */}
+          {activePanel === "images" && (
+            <ImagePanel 
+              onAddImage={onAddImage} 
+              onClose={() => setActivePanel(null)} 
+            />
+          )}
+
+
+          {activePanel === "font" && (
+            <FontPanel
+              selectedText={selectedElement}
+              setTexts={setElements}
+              selectedTextId={selectedId}
+              onClose={() => setActivePanel(null)}
+            />
+          )}
+          
+          {activePanel === "effects" && (
+            <TextEffectPanel
+              selectedText={selectedElement}
+              setTexts={setElements}
+              selectedTextId={selectedId}
+              updateText={(updates) => {
+                setElements((prev) =>
+                  prev.map((el) =>
+                    el.id === selectedId ? { ...el, style: { ...el.style, ...updates }, ...updates } : el
+                  )
+                );
+              }}
+              onClose={() => setActivePanel(null)}
+            />
+          )}
+
+          {activePanel === "filters" && (
+  <ImageFilterPanel
+    selectedElement={selectedElement}
+    setElements={setElements}
+    onClose={() => setActivePanel(null)}
+  />
+)}
+{activePanel === "videos" && (
+            <VideoPanel 
+              onAddVideo={onAddVideo} 
+              onClose={() => setActivePanel(null)} 
+            />
+          )}
+         
+
+          {activePanel === 'position' && (
+            <PositionPanel
+              selectedText={selectedElement}
+              setTexts={setElements}
+              selectedTextId={selectedId}
+              onClose={() => setActivePanel(null)}
+            />
+          )}
+        </div>
       </div>
     );
-  };
+  }
+
+  // This part only runs if activePanel is null (Standard Tab Navigation)
+  return (
+    <div className="h-full overflow-y-auto">
+      {activeTab === "templates" && <DesignPanel onSelectTemplate={onSelectTemplate} />}
+      {activeTab === "text" && <TextPanel onAddText={onAddText} />}
+      {activeTab === "images" && <ImagePanel onAddImage={onAddImage} />}
+      {activeTab === "elements" && <ElementsPanel onAddElement={onAddElement} />}
+      {activeTab === "uploads" && (
+        <UploadsPanel onAddImage={onAddImage} onAddElement={onAddElement} onAddText={onAddText} />
+      )}
+      {activeTab === "videos" && <VideoPanel onAddVideo={onAddVideo} />}
+    </div>
+  );
+};
 
   return (
     <aside className="flex h-full select-none">
