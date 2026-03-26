@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const CHAT_URL = ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 // Tooltip prompts
 const PROMPTS = [
@@ -134,7 +134,7 @@ export default function Chatbot() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY},
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
           messages: [...messages, userMsg].map(({ role, content }) => ({
