@@ -9,7 +9,11 @@ const axios = require('axios');
 const app = express();
 
 // --- MIDDLEWARE ---
-app.use(cors());
+app.use(cors({
+    origin: "*", // Allows any frontend to connect (Use this to test if it's working)
+    methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
+}));
 app.use(express.json());
 
 // --- DATABASE CONNECTION ---
